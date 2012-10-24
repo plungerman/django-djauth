@@ -16,6 +16,7 @@ LDAP_EMAIL_DOMAIN = settings.LDAP_EMAIL_DOMAIN
 class LDAPBackend:
     supports_object_permissions = False
     supports_anonymous_user = False
+    supports_inactive_user = False
 
     def authenticate(self, username=None, password=None):
         if not password:
