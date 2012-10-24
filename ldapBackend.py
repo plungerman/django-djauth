@@ -43,11 +43,15 @@ class LDAPBackend:
             if (len(result_data) != 1):
                 return None
 
-            # Attempt to bind to the user's DN - we don't need an if here. simple_bind will except if it fails, never return a value
+            # Attempt to bind to the user's DN.
+            # we don't need an "if" statement here.
+            # simple_bind will except if it fails, never return a value
             l.simple_bind_s(result_data[0][0],password)
 
-            # The user existed and authenticated. Get the user record or create one with no privileges.
-            # Could use get_or_create here, but I don't want to be creating random passwords constantly for no reason.
+            # The user existed and authenticated.
+            # Get the user record or create one with no privileges.
+            # Could use get_or_create here, but we don't want to be
+            # creating random passwords constantly for no reason.
 
             # get groups
             group = result_data[0][0].split(',')[1]
@@ -64,11 +68,18 @@ class LDAPBackend:
                     return user
 
             except:
-                # Theoretical backdoor could be input right here. We don't want that, so we input an unused random password here.
-                # The reason this is a backdoor is because we create a User object for LDAP users so we can get permissions, however
-                # we -don't- want them to be able to login without going through LDAP with this user. So we effectively disable their
-                # non-LDAP login ability by setting it to a random password that is not given to them. In this way, static users
-                # that don't go through ldap can still login properly, and LDAP users still have a User object.
+                # Theoretical backdoor could be input right here.
+                # We don't want that, so we input an unused random
+                # password here. The reason this is a backdoor is because
+                # we create a User object for LDAP users so we can get
+                # permissions, however we -don't- want them to be able to
+                # login without going through LDAP with this user. So we
+                # effectively disable their non-LDAP login ability by
+                # setting it to a random password that is not given to
+                # them. In this way, static users that don't go through
+                # ldap can still login properly, and LDAP users still
+                # have a User object.
+
                 from random import choice
                 import string
                 temp_pass = ""
