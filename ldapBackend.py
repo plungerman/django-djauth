@@ -9,8 +9,8 @@ LDAP_SERVER = settings.LDAP_SERVER
 LDAP_PORT = settings.LDAP_PORT
 LDAP_PROTOCOL = settings.LDAP_PROTOCOL
 LDAP_BASE = settings.LDAP_BASE
-LDAP_BASE_USER = settings.LDAP_USER
-LDAP_BASE_PASS = settings.LDAP_PASS
+LDAP_USER = settings.LDAP_USER
+LDAP_PASS = settings.LDAP_PASS
 LDAP_EMAIL_DOMAIN = settings.LDAP_EMAIL_DOMAIN
 
 class LDAPBackend:
@@ -31,7 +31,7 @@ class LDAPBackend:
         try:
             l = ldap.initialize('%s://%s:%s' % (LDAP_PROTOCOL,LDAP_SERVER,LDAP_PORT))
             l.protocol_version = ldap.VERSION3
-            l.simple_bind_s(LDAP_BASE_USER,LDAP_BASE_PASS)
+            l.simple_bind_s(LDAP_USER,LDAP_PASS)
         except ldap.LDAPError:
             return None
 
