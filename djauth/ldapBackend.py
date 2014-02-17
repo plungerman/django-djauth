@@ -12,20 +12,20 @@ LDAP_BASE = settings.LDAP_BASE
 LDAP_USER = settings.LDAP_USER
 LDAP_PASS = settings.LDAP_PASS
 LDAP_EMAIL_DOMAIN = settings.LDAP_EMAIL_DOMAIN
+LDAP_OBJECT_CLASS = settings.LDAP_OBJECT_CLASS
 
-class LDAPBackend:
+class LDAPBackend(object):
     supports_object_permissions = False
     supports_anonymous_user = False
     supports_inactive_user = False
 
     def authenticate(self, username=None, password=None):
         if not password:
-            #raise PermissionDenied
             return None
         username = username.lower()
         base = LDAP_BASE
         scope = ldap.SCOPE_SUBTREE
-        filter = "(&(objectclass=person) (cn=%s))" % username
+        filter = "(&(objectclass=%s) (cn=%s))" % (LDAP_OBJECT_CLASS,username)
         ret = ['givenName','sn','email']
 
         # Authenticate the base user so we can search
@@ -99,7 +99,6 @@ class LDAPBackend:
 
         except ldap.INVALID_CREDENTIALS:
             # Name or password were bad. Fail permanently.
-            #raise PermissionDenied
             return None
 
     def get_user(self, user_id):
