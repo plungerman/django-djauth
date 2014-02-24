@@ -68,10 +68,7 @@ class LDAPBackend(object):
                     return user
 
             except:
-                # Theoretical backdoor could be input right here.
-                # We don't want that, so we input an unused random
-                # password here. The reason this is a backdoor is because
-                # we create a User object for LDAP users so we can get
+                # We create a User object for LDAP users so we can get
                 # permissions, however we -don't- want them to be able to
                 # login without going through LDAP with this user. So we
                 # effectively disable their non-LDAP login ability by
@@ -80,12 +77,8 @@ class LDAPBackend(object):
                 # ldap can still login properly, and LDAP users still
                 # have a User object.
 
-                from random import choice
-                import string
-                temp_pass = ""
-                for i in range(8):
-                    temp_pass = temp_pass + choice(string.letters)
-                user = User.objects.create_user(username,username + '@%s' % LDAP_EMAIL_DOMAIN,temp_pass)
+                password = User.objects.make_random_password(length=24)
+                user = User.objects.create_user(username,username + '@%s' % LDAP_EMAIL_DOMAIN,password)
                 user.first_name = result_data[0][1]['givenName'][0]
                 user.last_name = result_data[0][1]['sn'][0]
                 user.save()

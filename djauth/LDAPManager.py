@@ -40,7 +40,7 @@ class LDAPManager(object):
     def bind(self, dn, password):
 
         # Attempt to bind to the user's DN.
-        # we need try/except here for edge cass errors
+        # we need try/except here for edge case errors
         # like server refuses to execute.
         try:
             self.l.simple_bind_s(dn,password)

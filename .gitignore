@@ -1,5 +1,6 @@
 *.py[co]
 settings.py
+wsgi.py
 
 # Packages
 *.egg
