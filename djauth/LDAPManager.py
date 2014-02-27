@@ -56,7 +56,7 @@ class LDAPManager(object):
         givenName                   [first name]
         sn                          [last name]
         carthageDob                 [date of birth]
-        carthageNameID              [college ID]
+        settings.LDAP_ID_ATTR       [college ID]
         cn                          [we use email for username]
         mail                        [email]
         userPassword                [password]
@@ -70,7 +70,7 @@ class LDAPManager(object):
 
         dn = 'cn=%s,%s' % (person["cn"],settings.LDAP_BASE)
         self.l.add_s(dn, user)
-        return self.search(person["carthageNameID"])
+        return self.search(person[settings.LDAP_ID_ATTR])
 
     def dj_create(self, data):
         # We create a User object for LDAP users so we can get
@@ -84,7 +84,7 @@ class LDAPManager(object):
 
         data = data[0][1]
         email = data['mail'][0]
-        uid = data['carthageNameID'][0]
+        uid = data[settings.LDAP_ID_ATTR][0]
         cn = data['cn'][0]
         password = User.objects.make_random_password(length=24)
         user = User.objects.create(pk=uid,username=cn,email=email)
@@ -128,11 +128,11 @@ class LDAPManager(object):
         except ldap.LDAPError, e:
             raise Exception(e)
 
-    def search(self, val, field="carthageNameID"):
+    def search(self, val, field=settings.LDAP_ID_ATTR, ret=settings.LDAP_RETURN):
         """
         Searches for an LDAP user.
         Takes as argument a value and a valid unique field from
-        the schema (i.e. carthageNameID, cn, mail).
+        the schema (i.e. LDAP_ID_ATTR, cn, mail).
         Returns a list with dn tuple and a dictionary with the
         following key/value pairs:
 
@@ -140,7 +140,7 @@ class LDAPManager(object):
         sn                      [last name]
         cn                      [username]
         carthageDob             [date of birth]
-        carthageNameID          [college ID]
+        settings.LDAP_ID_ATTR   [college ID]
         carthageStaffStatus     [staff?]
         carthageOtherStatus     [alumni?]
         carthageFacultyStatus   [faculty?]
@@ -148,13 +148,12 @@ class LDAPManager(object):
         mail                    [email]
         """
 
-        valid = ["cn","carthageNameID","mail"]
+        valid = ["cn",settings.LDAP_ID_ATTR,"mail"]
         if field not in valid:
             return None
         philter = "(&(objectclass=%s) (%s=%s))" % (
             settings.LDAP_OBJECT_CLASS,field,val
         )
-        ret = settings.LDAP_RETURN
 
         result_id = self.l.search(
             settings.LDAP_BASE,ldap.SCOPE_SUBTREE,philter,ret
