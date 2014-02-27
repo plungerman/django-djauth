@@ -41,7 +41,9 @@ def main():
 
     # initialize the manager
     l = LDAPManager(
+        protocol=settings.LDAP_PROTOCOL_PWM,
         server=settings.LDAP_SERVER_PWM,
+        port=settings.LDAP_PORT_PWM,
         user=settings.LDAP_USER_PWM,
         password=settings.LDAP_PASS_PWM
     )
