@@ -32,7 +32,8 @@ def main():
         server=settings.LDAP_SERVER_PWM,
         port=settings.LDAP_PORT_PWM,
         user=settings.LDAP_USER_PWM,
-        password=settings.LDAP_PASS_PWM
+        password=settings.LDAP_PASS_PWM,
+        base=settings.LDAP_BASE_PWM
     )
 
     if cid:

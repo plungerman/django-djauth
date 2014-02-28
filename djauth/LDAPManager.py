@@ -10,24 +10,18 @@ logger = logging.getLogger(__name__)
 
 class LDAPManager(object):
 
-    def __init__(self,protocol=None,port=None,server=None,user=None,password=None):
+    def __init__(self, protocol=settings.LDAP_PROTOCOL,
+                 port=settings.LDAP_PORT,server=settings.LDAP_SERVER,
+                 user=settings.LDAP_USER,password=settings.LDAP_PASS,
+                 base=settings.LDAP_BASE):
         # Authenticate the base user so we can search
-        if protocol is None:
-            protocol = settings.LDAP_PROTOCOL
-        if port is None:
-            port = settings.LDAP_PORT
-        if server is None:
-            server = settings.LDAP_SERVER
-        if user is None:
-            user = settings.LDAP_USER
-        if password is None:
-            password = settings.LDAP_PASS
         try:
             self.l = ldap.initialize(
                 '%s://%s:%s' % (protocol,server,port)
             )
             self.l.protocol_version = ldap.VERSION3
             self.l.simple_bind_s(user,password)
+            self.base = base
         except ldap.LDAPError, e:
             raise Exception(e)
 
@@ -68,7 +62,7 @@ class LDAPManager(object):
         """
         user = modlist.addModlist(person)
 
-        dn = 'cn=%s,%s' % (person["cn"],settings.LDAP_BASE)
+        dn = 'cn=%s,%s' % (person["cn"],self.base)
         self.l.add_s(dn, user)
         return self.search(person[settings.LDAP_ID_ATTR])
 
@@ -122,7 +116,7 @@ class LDAPManager(object):
 
         cn              [username]
         """
-        dn = "cn=%s,%s" % (person["cn"],settings.LDAP_BASE)
+        dn = "cn=%s,%s" % (person["cn"],self.base)
         try:
             self.l.delete_s(dn)
         except ldap.LDAPError, e:
@@ -156,7 +150,7 @@ class LDAPManager(object):
         )
 
         result_id = self.l.search(
-            settings.LDAP_BASE,ldap.SCOPE_SUBTREE,philter,ret
+            self.base,ldap.SCOPE_SUBTREE,philter,ret
         )
         result_type, result_data = self.l.result(result_id, 0)
         # If the user does not exist in LDAP, Fail.
