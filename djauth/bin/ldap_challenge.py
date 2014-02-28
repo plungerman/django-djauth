@@ -3,24 +3,11 @@
 Shell script to search LDAP store by username or ID
 """
 
-from optparse import OptionParser
-
-import os, sys, ldap
-
-# env
-sys.path.append('/usr/local/lib/python2.7/dist-packages/')
-sys.path.append('/usr/local/lib/python2.7/')
-sys.path.append('/usr/lib/python2.7/dist-packages/')
-sys.path.append('/usr/lib/python2.7/')
-sys.path.append('/data2/django_trunk/')
-sys.path.append('/data2/django_projects/')
-sys.path.append('/data2/django_third/')
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "djaludir.settings")
-
-# now we can import settings
 from django.conf import settings
-
 from djauth.LDAPManager import LDAPManager
+
+from optparse import OptionParser
+import os, sys, ldap
 
 # set up command-line options
 desc = """
