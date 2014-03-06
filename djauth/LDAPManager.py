@@ -20,6 +20,10 @@ class LDAPManager(object):
                 '%s://%s:%s' % (protocol,server,port)
             )
             self.l.protocol_version = ldap.VERSION3
+            # not certain if this is necessary but passwd_s is killing me
+            self.l.set_option(ldap.OPT_PROTOCOL_VERSION,ldap.VERSION3)
+            # logging
+            ldap.set_option(ldap.OPT_DEBUG_LEVEL,255)
             self.l.simple_bind_s(user,password)
             self.base = base
         except ldap.LDAPError, e:
@@ -34,12 +38,7 @@ class LDAPManager(object):
     def bind(self, dn, password):
 
         # Attempt to bind to the user's DN.
-        # we need try/except here for edge case errors
-        # like server refuses to execute.
-        try:
-            self.l.simple_bind_s(dn,password)
-        except ldap.LDAPError, e:
-            raise Exception(e)
+        self.l.simple_bind_s(dn,password)
 
     def create(self, person):
         """
@@ -94,6 +93,33 @@ class LDAPManager(object):
                 g.user_set.add(user)
         return user
 
+    def update_password(self, dn, password):
+        """
+        Changes an LDAP user's password.
+        takes a dn and a password.
+
+        The passwd_s() method and its asynchronous counterpart, passwd()
+        take three arguments:
+
+        The DN of the record to change.
+        The old password (or None if an admin user makes the change)
+        The new password
+
+        If the passwd_s change is successful, it returns a tuple with the
+        status code (ldap.RES_EXTENDED, which is the integer 120), and an
+        empty list:
+
+        (120, [])
+
+        passwd returns a result ID code.
+        """
+        #print "protocol version = %s" % self.l.protocol_version
+        #print ldap.TLS_AVAIL
+        #print "require cert = %s" % ldap.OPT_X_TLS_REQUIRE_CERT
+        status = self.l.passwd_s( dn, None, password )
+
+        return status
+
     def update(self, person):
         """
         Updates an LDAP user.
@@ -127,7 +153,7 @@ class LDAPManager(object):
         Searches for an LDAP user.
         Takes as argument a value and a valid unique field from
         the schema (i.e. LDAP_ID_ATTR, cn, mail).
-        Returns a list with dn tuple and a dictionary with the
+        Returns None or a list with dn tuple and a dictionary with the
         following key/value pairs:
 
         givenName               [first name]
