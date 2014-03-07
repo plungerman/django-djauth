@@ -4,7 +4,6 @@ from django.contrib.auth.models import User, Group
 
 import ldap
 import ldap.modlist as modlist
-
 import logging
 logger = logging.getLogger(__name__)
 
@@ -21,9 +20,9 @@ class LDAPManager(object):
             )
             self.l.protocol_version = ldap.VERSION3
             # not certain if this is necessary but passwd_s is killing me
-            self.l.set_option(ldap.OPT_PROTOCOL_VERSION,ldap.VERSION3)
+            #self.l.set_option(ldap.OPT_PROTOCOL_VERSION,ldap.VERSION3)
             # logging
-            ldap.set_option(ldap.OPT_DEBUG_LEVEL,255)
+            #ldap.set_option(ldap.OPT_DEBUG_LEVEL,255)
             self.l.simple_bind_s(user,password)
             self.base = base
         except ldap.LDAPError, e:
@@ -112,6 +111,10 @@ class LDAPManager(object):
         (120, [])
 
         passwd returns a result ID code.
+
+        Novell do not see to support 3062 so passwd & passwd_s fail
+        with a PROTOCOL_ERROR. Returns 2 if using passwd, which means
+        the same thing.
         """
         #print "protocol version = %s" % self.l.protocol_version
         #print ldap.TLS_AVAIL
@@ -120,20 +123,15 @@ class LDAPManager(object):
 
         return status
 
-    def update(self, person):
+    def modify(self, dn, name, value):
         """
-        Updates an LDAP user.
+        Modifies an LDAP user's attribute.
         """
 
-        # Some place-holders for old and new values
-        old = {'description':'User object for replication using slurpd'}
-        new = {'description':'Bind object used for replication using slurpd'}
-
-        # Convert place-holders for modify-operation using modlist-module
-        ldif = modlist.modifyModlist(old,new)
-
+        #ldif = modlist.modifyModlist(old,new)
         # Do the actual modification
-        l.modify_s(dn,ldif)
+        #l.modify_s(dn,ldif)
+        return self.l.modify_s(dn, [(ldap.MOD_REPLACE, name, str(value))])
 
     def delete(self, person):
         """

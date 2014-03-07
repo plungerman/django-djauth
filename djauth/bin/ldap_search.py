@@ -36,6 +36,7 @@ parser = OptionParser(description=desc)
 parser.add_option("-f", "--att_name", help="Schema attribute field name.", dest="field")
 parser.add_option("-v", "--att_val", help="Schema attribute value.", dest="value")
 parser.add_option("-p", "--password", help="Person's password.", dest="password")
+parser.add_option("-c", "--create", help="Create a Django account.", dest="create")
 
 def main():
     """
@@ -44,13 +45,27 @@ def main():
 
     # initialize the manager
     l = LDAPManager()
-
+    """
+    l = LDAPManager(
+        protocol=settings.LDAP_PROTOCOL_PWM,
+        server=settings.LDAP_SERVER_PWM,
+        port=settings.LDAP_PORT_PWM,
+        user=settings.LDAP_USER_PWM,
+        password=settings.LDAP_PASS_PWM,
+        base=settings.LDAP_BASE_PWM
+    )
+    """
     result = l.search(value,field=field)
     print result
 
     # authenticate
     if password:
-        l.bind(result[0][0],password)
+        auth = l.bind(result[0][0],password)
+        print auth
+        # create a django user
+        if create:
+            user = l.dj_create(result[0][1]["cn"][0],result)
+            print user
 
 ######################
 # shell command line
@@ -61,6 +76,7 @@ if __name__ == "__main__":
     field = options.field
     value = options.value
     password = options.password
+    create = options.create
 
     valid = ["cn","carthageNameID","mail"]
     if not field and not value:
