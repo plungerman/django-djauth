@@ -46,7 +46,7 @@ def main():
     result = l.search(value,field=field,ret=settings.LDAP_RETURN_PWM)
 
     try:
-        question = result[0][1]['pwmResponseSet'][0]
+        question = result[0][1][settings.LDAP_CHALLENGE_ATTR][0]
     except:
         question = None
 
