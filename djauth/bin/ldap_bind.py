@@ -3,9 +3,8 @@ from django.contrib.auth.models import User, Group
 
 from djauth.LDAPManager import LDAPManager
 
-#username = "lsemler"
-username = "skirk"
-password = "Carthage1847"
+username = ""
+password = ""
 
 # initialise the LDAP manager
 l = LDAPManager()
