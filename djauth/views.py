@@ -19,4 +19,6 @@ def loggedout(request, template_name='accounts/logged_out.html'):
         from django.contrib.auth.models import AnonymousUser
         request.user = AnonymousUser()
 
-    return render_to_response(template_name, context_instance=RequestContext(request))
+    return render_to_response(
+        template_name, context_instance=RequestContext(request)
+    )

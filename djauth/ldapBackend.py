@@ -13,6 +13,8 @@ class LDAPBackend(object):
             return None
 
         username = username.lower()
+        # works for username and username@domain.com
+        username = username.lower().split('@')[0]
 
         try:
             # initialise the LDAP manager
