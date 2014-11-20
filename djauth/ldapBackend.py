@@ -44,7 +44,7 @@ class LDAPBackend(object):
                     return user
             except:
                 # Create a User object.
-                user = l.dj_create(result_data)
+                user = l.dj_create(result_data, pk=settings.LDAP_AUTH_USER_PK)
                 try:
                     g = Group.objects.get(name__iexact=group[3:])
                     g.user_set.add(user)
