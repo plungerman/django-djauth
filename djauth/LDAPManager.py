@@ -64,7 +64,7 @@ class LDAPManager(object):
         self.l.add_s(dn, user)
         return self.search(person[settings.LDAP_ID_ATTR])
 
-    def dj_create(self, data, auth_user_pk=True):
+    def dj_create(self, data, auth_user_pk=False):
         # We create a User object for LDAP users so we can get
         # permissions, however we -don't- want them to be able to
         # login without going through LDAP with this user. So we
