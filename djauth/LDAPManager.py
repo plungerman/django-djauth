@@ -66,7 +66,7 @@ class LDAPManager(object):
 
     def dj_create(self, data, auth_user_pk=False):
         # We create a User object for LDAP users so we can get
-        # permissions, however we -don't- want them to be able to
+        # permissions, however we don't want them to be able to
         # login without going through LDAP with this user. So we
         # effectively disable their non-LDAP login ability by
         # setting it to a random password that is not given to
@@ -76,11 +76,12 @@ class LDAPManager(object):
 
         data = data[0][1]
         email = data['mail'][0]
-        # if auth_user_pk is True, then we use the primary key from the database
-        # rather than the LDAP user ID
+        # if auth_user_pk is True, then we use the primary key from
+        # the database rather than the LDAP user ID
         if auth_user_pk:
             uid = None
         else:
+            # this will barf 500 if we don't have an ID
             uid = data[settings.LDAP_ID_ATTR][0]
         cn = data['cn'][0]
         password = User.objects.make_random_password(length=24)
