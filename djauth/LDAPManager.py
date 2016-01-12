@@ -129,15 +129,19 @@ class LDAPManager(object):
 
         return status
 
-    def modify(self, dn, name, value):
+    #def modify(self, dn, name, value):
+    def modify(self, dn, old, new):
         """
         Modifies an LDAP user's attribute.
         """
 
-        #ldif = modlist.modifyModlist(old,new)
+        print "old = {}".format(old)
+        print "new = {}".format(new)
+        ldif = modlist.modifyModlist(old, new)
+        print "modlist = {}".format(ldif)
         # Do the actual modification
-        #l.modify_s(dn,ldif)
-        return self.l.modify_s(dn, [(ldap.MOD_REPLACE, name, str(value))])
+        return self.l.modify_s(dn, ldif)
+        #return self.l.modify(dn, ldif)
 
     def delete(self, person):
         """
