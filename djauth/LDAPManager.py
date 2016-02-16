@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.conf import settings
 from django.contrib.auth.models import User, Group
+from djtools.fields import NOW
 
 import ldap
 import ldap.modlist as modlist
@@ -85,7 +86,9 @@ class LDAPManager(object):
             uid = data[settings.LDAP_ID_ATTR][0]
         cn = data['cn'][0]
         password = User.objects.make_random_password(length=24)
-        user = User.objects.create(pk=uid,username=cn,email=email)
+        user = User.objects.create(
+            pk=uid,username=cn,email=email,last_login=NOW
+        )
         user.set_password(password)
         user.first_name = data['givenName'][0]
         user.last_name = data['sn'][0]
