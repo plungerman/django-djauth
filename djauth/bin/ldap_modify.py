@@ -6,9 +6,11 @@ Shell script to search LDAP store by username or ID
 from django.conf import settings
 from djauth.LDAPManager import LDAPManager
 
-from optparse import OptionParser
-import os, sys, ldap
+import sys
 import hashlib, base64
+import argparse
+import ldap.modlist as modlist
+import ldap
 
 # set up command-line options
 desc = """
@@ -18,10 +20,26 @@ Accepts as input:
     value [of attribute]
 """
 
-parser = OptionParser(description=desc)
-parser.add_option("-c", "--cn", help="LDAP cn", dest="cn")
-parser.add_option("-n", "--name", help="Attribute name to modify", dest="name")
-parser.add_option("-v", "--value", help="Attribute value to modify", dest="value")
+parser = argparse.ArgumentParser(description=desc)
+
+parser.add_argument(
+    "-c", "--cn",
+    required=True,
+    help="LDAP cn",
+    dest="cn"
+)
+parser.add_argument(
+    "-n", "--name",
+    required=True,
+    help="Attribute name to modify",
+    dest="name"
+)
+parser.add_argument(
+    "-v", "--value",
+    required=True,
+    help="Attribute value to modify",
+    dest="value"
+)
 
 def hash(password):
     return "{SHA}" + base64.encodestring(hashlib.sha1(str(password)).digest())
@@ -30,13 +48,18 @@ def main():
     """
     main method
     """
-    print cn
-    print name
-    print value
+
+    global cn
+    global name
+    global value
+
+    print "cn = {}".format(cn)
+    print "name = {}".format(name)
+    print "value = {}".format(value)
 
     # encrypt the password
-    #if name == "userPassword":
-    #    value = hash(value)
+    if name == "userPassword":
+        value = hash(value)
 
     # initialize the manager
     if name == "userPassword":
@@ -52,21 +75,38 @@ def main():
         l = LDAPManager()
     # use search to obtain dn
     search = l.search(cn,field="cn")
+    print search
     dn = search[0][0]
-    result = l.modify(dn, name, value)
-
+    print "dn = {}".format(dn)
+    #result = l.modify(dn, name, value)
+    old = {
+        "dn":search[0][0],
+        "cn":search[0][1]["cn"],
+        "mail":search[0][1]["mail"],
+        "carthageNameID":search[0][1]["carthageNameID"],
+        "sn":search[0][1]["sn"],
+        "carthageFormerStudentStatus":search[0][1]["carthageFormerStudentStatus"],
+        "givenName":search[0][1]["givenName"],
+        "carthageDob":search[0][1]["carthageDob"]
+    }
+    new = old
+    new[name] = value
+    #result = l.modify(dn, old, new)
     # success = (103, [])
-    print result
+    #print result
 
 ######################
-# shell command line
+# this doesn't really work for dn or cn but should work for other name/values
 ######################
 
 if __name__ == "__main__":
-    (options, args) = parser.parse_args()
-    cn = options.cn
-    name = options.name
-    value = options.value
+
+    args = parser.parse_args()
+    cn = args.cn
+    name = args.name
+    value = args.value
+
+    print args
 
     if not cn or not name or not value:
         print "You must provide a cn, an attribute name, and an attribute value.\n"
@@ -74,3 +114,4 @@ if __name__ == "__main__":
         exit(-1)
     else:
         sys.exit(main())
+
