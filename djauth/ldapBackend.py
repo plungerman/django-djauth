@@ -28,8 +28,15 @@ class LDAPBackend(object):
             # Attempt to bind to the user's DN.
             l.bind(result_data[0][0],password)
             # Success. The user existed and authenticated.
-            # Get groups
-            group = result_data[0][0].split(',')[1]
+            # Get group
+            if result_data[0][1]["carthageFacultyStatus"][0]:
+                group = "carthageFacultyStatus"
+            elif result_data[0][1]["carthageStaffStatus"][0]:
+                group = "carthageStaffStatus"
+            elif result_data[0][1]["carthageStudentStatus"][0]:
+                group = "carthageStudentStatus"
+            else:
+                group = None
             # Get the user record or create one with no privileges.
             try:
                 user = User.objects.get(username__exact=username)
@@ -38,7 +45,8 @@ class LDAPBackend(object):
                     user.first_name = result_data[0][1]['givenName'][0]
                     user.save()
                 try:
-                    g = Group.objects.get(name__iexact=group[3:])
+                    # add them to their group or 'except' if they already belong
+                    g = Group.objects.get(name__iexact=group)
                     g.user_set.add(user)
                 except:
                     return user
@@ -47,11 +55,6 @@ class LDAPBackend(object):
                 user = l.dj_create(
                     result_data, auth_user_pk=settings.LDAP_AUTH_USER_PK
                 )
-                try:
-                    g = Group.objects.get(name__iexact=group[3:])
-                    g.user_set.add(user)
-                except:
-                    pass
 
             # Success.
             return user
