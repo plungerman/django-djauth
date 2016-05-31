@@ -3,6 +3,10 @@ from django.contrib.auth.models import User, Group
 
 from djauth.LDAPManager import LDAPManager
 
+import logging
+logger = logging.getLogger(__name__)
+
+
 class LDAPBackend(object):
     supports_object_permissions = False
     supports_anonymous_user = False
@@ -59,8 +63,9 @@ class LDAPBackend(object):
             # Success.
             return user
 
-        except:
+        except Exception, e:
             # Name or password were bad. Fail permanently.
+            logger.debug("exception: {}".format(e))
             return None
 
     def get_user(self, user_id):
