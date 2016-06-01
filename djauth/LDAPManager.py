@@ -38,7 +38,7 @@ class LDAPManager(object):
     def bind(self, dn, password):
 
         # Attempt to bind to the user's DN.
-        self.l.simple_bind_s(dn,password)
+        return self.l.simple_bind_s(dn,password)
 
     def create(self, person):
         """
