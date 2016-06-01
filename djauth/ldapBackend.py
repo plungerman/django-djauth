@@ -33,12 +33,15 @@ class LDAPBackend(object):
             l.bind(result_data[0][0],password)
             # Success. The user existed and authenticated.
             # Get group
-            if result_data[0][1]["carthageFacultyStatus"][0]:
-                group = "carthageFacultyStatus"
-            elif result_data[0][1]["carthageStaffStatus"][0]:
-                group = "carthageStaffStatus"
-            elif result_data[0][1]["carthageStudentStatus"][0]:
-                group = "carthageStudentStatus"
+            if result_data[0][1].get("carthageFacultyStatus"):
+                if result_data[0][1]["carthageFacultyStatus"][0]:
+                    group = "carthageFacultyStatus"
+            elif result_data[0][1].get("carthageStaffStatus"):
+                if result_data[0][1]["carthageStaffStatus"][0]:
+                    group = "carthageStaffStatus"
+            elif result_data[0][1].get("carthageStudentStatus"):
+                if result_data[0][1]["carthageStudentStatus"][0]:
+                    group = "carthageStudentStatus"
             else:
                 group = None
             # Get the user record or create one with no privileges.
@@ -49,9 +52,11 @@ class LDAPBackend(object):
                     user.first_name = result_data[0][1]['givenName'][0]
                     user.save()
                 try:
-                    # add them to their group or 'except' if they already belong
-                    g = Group.objects.get(name__iexact=group)
-                    g.user_set.add(user)
+                    if group:
+                        # add them to their group
+                        # or 'except' if they already belong
+                        g = Group.objects.get(name__iexact=group)
+                        g.user_set.add(user)
                 except:
                     return user
             except:
@@ -65,7 +70,7 @@ class LDAPBackend(object):
 
         except Exception, e:
             # Name or password were bad. Fail permanently.
-            logger.debug("exception: {}".format(e))
+            logger.debug("[{}] exception: {}".format(username, e))
             return None
 
     def get_user(self, user_id):
