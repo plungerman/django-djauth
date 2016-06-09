@@ -28,22 +28,25 @@ class LDAPBackend(object):
             # If the user does not exist in LDAP, Fail.
             if not result_data:
                 return None
-
+            logger.debug("[{}] result data: {}".format(username, result_data))
             # Attempt to bind to the user's DN.
             l.bind(result_data[0][0],password)
             # Success. The user existed and authenticated.
             # Get group
+            group = None
             if result_data[0][1].get("carthageFacultyStatus"):
-                if result_data[0][1]["carthageFacultyStatus"][0]:
+                if result_data[0][1]["carthageFacultyStatus"][0] == "A":
                     group = "carthageFacultyStatus"
-            elif result_data[0][1].get("carthageStaffStatus"):
-                if result_data[0][1]["carthageStaffStatus"][0]:
+
+            if result_data[0][1].get("carthageStaffStatus"):
+                if result_data[0][1]["carthageStaffStatus"][0] == "A":
                     group = "carthageStaffStatus"
-            elif result_data[0][1].get("carthageStudentStatus"):
-                if result_data[0][1]["carthageStudentStatus"][0]:
+
+            if result_data[0][1].get("carthageStudentStatus"):
+                if result_data[0][1]["carthageStudentStatus"][0] == "A":
                     group = "carthageStudentStatus"
-            else:
-                group = None
+
+            logger.debug("[{}] group: {}".format(username, group))
             # Get the user record or create one with no privileges.
             try:
                 user = User.objects.get(username__exact=username)
@@ -51,12 +54,14 @@ class LDAPBackend(object):
                     user.last_name = result_data[0][1]['sn'][0]
                     user.first_name = result_data[0][1]['givenName'][0]
                     user.save()
+                logger.debug("[{}] user: {}".format(username, user.first_name))
                 try:
                     if group:
                         # add them to their group
                         # or 'except' if they already belong
                         g = Group.objects.get(name__iexact=group)
                         g.user_set.add(user)
+                    logger.debug("[{}] if group: {}".format(username, group))
                 except:
                     return user
             except:
