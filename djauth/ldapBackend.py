@@ -3,9 +3,6 @@ from django.contrib.auth.models import User, Group
 
 from djauth.LDAPManager import LDAPManager
 
-import logging
-logger = logging.getLogger(__name__)
-
 
 class LDAPBackend(object):
     supports_object_permissions = False
@@ -28,7 +25,6 @@ class LDAPBackend(object):
             # If the user does not exist in LDAP, Fail.
             if not result_data:
                 return None
-            logger.debug("[{}] result data: {}".format(username, result_data))
             # Attempt to bind to the user's DN.
             l.bind(result_data[0][0],password)
             # Success. The user existed and authenticated.
@@ -46,7 +42,6 @@ class LDAPBackend(object):
                 if result_data[0][1]["carthageStudentStatus"][0] == "A":
                     group = "carthageStudentStatus"
 
-            logger.debug("[{}] group: {}".format(username, group))
             # Get the user record or create one with no privileges.
             try:
                 user = User.objects.get(username__exact=username)
@@ -54,14 +49,12 @@ class LDAPBackend(object):
                     user.last_name = result_data[0][1]['sn'][0]
                     user.first_name = result_data[0][1]['givenName'][0]
                     user.save()
-                logger.debug("[{}] user: {}".format(username, user.first_name))
                 try:
                     if group:
                         # add them to their group
                         # or 'except' if they already belong
                         g = Group.objects.get(name__iexact=group)
                         g.user_set.add(user)
-                    logger.debug("[{}] if group: {}".format(username, group))
                 except:
                     return user
             except:
@@ -75,7 +68,6 @@ class LDAPBackend(object):
 
         except Exception, e:
             # Name or password were bad. Fail permanently.
-            logger.debug("[{}] exception: {}".format(username, e))
             return None
 
     def get_user(self, user_id):
