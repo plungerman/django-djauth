@@ -1,3 +1,6 @@
+import django
+django.setup()
+
 from django.conf import settings
 from django.contrib.auth.models import User, Group
 
@@ -22,3 +25,21 @@ else:
     print "Attempt to bind to the user's DN."
     print "\n\n"
     l.bind(result_data[0][0],password)
+
+# Get group
+group = None
+if result_data[0][1].get("carthageFacultyStatus"):
+    if result_data[0][1]["carthageFacultyStatus"][0] == "A":
+        group = "carthageFacultyStatus"
+        print group
+
+if result_data[0][1].get("carthageStaffStatus"):
+    if result_data[0][1]["carthageStaffStatus"][0] == "A":
+        group = "carthageStaffStatus"
+        print group
+
+if result_data[0][1].get("carthageStudentStatus"):
+    if result_data[0][1]["carthageStudentStatus"][0] == "A":
+        group = "carthageStudentStatus"
+        print group
+
