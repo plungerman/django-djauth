@@ -3,9 +3,7 @@
 Shell script to search LDAP store by username or ID
 """
 
-from optparse import OptionParser
-
-import os, sys
+import django, os, sys
 
 # env
 sys.path.append('/usr/local/lib/python2.7/dist-packages/')
@@ -17,10 +15,14 @@ sys.path.append('/data2/django_projects/')
 sys.path.append('/data2/django_third/')
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "djaludir.settings")
 
+django.setup()
+
 # now we can import settings
 from django.conf import settings
 
 from djauth.LDAPManager import LDAPManager
+
+from optparse import OptionParser
 
 # set up command-line options
 desc = """
@@ -33,10 +35,18 @@ Valid attributes:
 """
 
 parser = OptionParser(description=desc)
-parser.add_option("-f", "--att_name", help="Schema attribute field name.", dest="field")
-parser.add_option("-v", "--att_val", help="Schema attribute value.", dest="value")
-parser.add_option("-p", "--password", help="Person's password.", dest="password")
-parser.add_option("-c", "--create", help="Create a Django account.", dest="create")
+parser.add_option(
+    "-f", "--att_name", help="Schema attribute field name.", dest="field"
+)
+parser.add_option(
+    "-v", "--att_val", help="Schema attribute value.", dest="value"
+)
+parser.add_option(
+    "-p", "--password", help="Person's password.", dest="password"
+)
+parser.add_option(
+    "-c", "--create", help="Create a Django account.", dest="create"
+)
 
 def main():
     """
