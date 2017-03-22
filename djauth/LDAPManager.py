@@ -17,7 +17,7 @@ class LDAPManager(object):
         # Authenticate the base user so we can search
         try:
             self.l = ldap.initialize(
-                '%s://%s:%s' % (protocol,server,port)
+                '{}://{}:{}'.format(protocol,server,port)
             )
             self.l.protocol_version = ldap.VERSION3
             # not certain if this is necessary but passwd_s is killing me
@@ -41,11 +41,11 @@ class LDAPManager(object):
         return self.l.simple_bind_s(dn,password)
 
     def create(self, person):
-        """
+        '''
         Creates a new LDAP user.
         Takes as argument a dictionary with the following key/value pairs:
 
-        objectclass                 ["User","etc"]
+        objectclass                 ['User','etc']
         givenName                   [first name]
         sn                          [last name]
         carthageDob                 [date of birth]
@@ -58,22 +58,25 @@ class LDAPManager(object):
         carthageStudentStatus       [student]
         carthageFormerStudentStatus [alumni]
         carthageOtherStatus         [trustees etc]
-        """
+        '''
+
         user = modlist.addModlist(person)
 
-        dn = 'cn=%s,%s' % (person["cn"],self.base)
+        dn = 'cn={},{}'.format(person['cn'],self.base)
         self.l.add_s(dn, user)
         return self.search(person[settings.LDAP_ID_ATTR])
 
     def dj_create(self, data, auth_user_pk=False):
-        # We create a User object for LDAP users so we can get
-        # permissions, however we don't want them to be able to
-        # login without going through LDAP with this user. So we
-        # effectively disable their non-LDAP login ability by
-        # setting it to a random password that is not given to
-        # them. In this way, static users that don't go through
-        # ldap can still login properly, and LDAP users still
-        # have a User object.
+        '''
+        We create a User object for LDAP users so we can get
+        permissions, however we don't want them to be able to
+        login without going through LDAP with this user. So we
+        effectively disable their non-LDAP login ability by
+        setting it to a random password that is not given to
+        them. In this way, static users that don't go through
+        ldap can still login properly, and LDAP users still
+        have a User object.
+        '''
 
         data = data[0][1]
         email = data['mail'][0]
@@ -102,7 +105,7 @@ class LDAPManager(object):
         return user
 
     def update_password(self, dn, password):
-        """
+        '''
         Changes an LDAP user's password.
         takes a dn and a password.
 
@@ -124,18 +127,19 @@ class LDAPManager(object):
         Novell do not see to support 3062 so passwd & passwd_s fail
         with a PROTOCOL_ERROR. Returns 2 if using passwd, which means
         the same thing.
-        """
+        '''
+
         #print "protocol version = %s" % self.l.protocol_version
         #print ldap.TLS_AVAIL
-        #print "require cert = %s" % ldap.OPT_X_TLS_REQUIRE_CERT
+        #print "require cert = {}".format(ldap.OPT_X_TLS_REQUIRE_CERT)
         status = self.l.passwd_s( dn, None, password )
 
         return status
 
     def modify_list(self, dn, old, new):
-        """
+        '''
         Modifies an LDAP user's attribute.
-        """
+        '''
 
         #print "old = {}".format(old)
         #print "new = {}".format(new)
@@ -145,9 +149,9 @@ class LDAPManager(object):
         return self.l.modify_s(dn, ldif)
 
     def modify(self, dn, name, value):
-        """
+        '''
         Modifies an LDAP user's attribute.
-        """
+        '''
 
         #ldif = modlist.modifyModlist(old,new)
         # Do the actual modification
@@ -155,20 +159,21 @@ class LDAPManager(object):
         return self.l.modify_s(dn, [(ldap.MOD_REPLACE, name, str(value))])
 
     def delete(self, person):
-        """
+        '''
         Deletes an LDAP user.
         Takes as argument a dictionary with the following key/value pairs:
 
         cn              [username]
-        """
-        dn = "cn=%s,%s" % (person["cn"],self.base)
+        '''
+
+        dn = 'cn={},{}'.format(person['cn'],self.base)
         try:
             self.l.delete_s(dn)
         except ldap.LDAPError, e:
             raise Exception(e)
 
     def search(self, val, field=settings.LDAP_ID_ATTR, ret=settings.LDAP_RETURN):
-        """
+        '''
         Searches for an LDAP user.
         Takes as argument a value and a valid unique field from
         the schema (i.e. LDAP_ID_ATTR, cn, mail).
@@ -185,17 +190,16 @@ class LDAPManager(object):
         carthageFacultyStatus   [faculty?]
         carthageStudentStatus   [student?]
         mail                    [email]
-        """
+        '''
 
-        valid = ["cn",settings.LDAP_ID_ATTR,"mail"]
+        valid = ['cn',settings.LDAP_ID_ATTR,'mail']
         if field not in valid:
             return None
-        philter = "(&(objectclass=%s) (%s=%s))" % (
+        philter = '(&(objectclass={}) ({}={}))'.format(
             settings.LDAP_OBJECT_CLASS,field,val
         )
-
         result_id = self.l.search(
-            self.base,ldap.SCOPE_SUBTREE,philter,ret
+            self.base,ldap.SCOPE_SUBTREE,str(philter),[x.encode('utf-8') for x in ret]
         )
         result_type, result_data = self.l.result(result_id, 0)
         # If the user does not exist in LDAP, Fail.
