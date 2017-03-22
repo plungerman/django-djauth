@@ -13,7 +13,8 @@ sys.path.append('/usr/lib/python2.7/')
 sys.path.append('/data2/django_trunk/')
 sys.path.append('/data2/django_projects/')
 sys.path.append('/data2/django_third/')
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "djaludir.settings")
+
+#os.environ.setdefault("DJANGO_SETTINGS_MODULE", "djaludir.settings")
 
 django.setup()
 
