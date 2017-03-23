@@ -124,7 +124,7 @@ class LDAPManager(object):
 
         passwd returns a result ID code.
 
-        Novell do not see to support 3062 so passwd & passwd_s fail
+        Novell do not seem to support 3062 so passwd & passwd_s fail
         with a PROTOCOL_ERROR. Returns 2 if using passwd, which means
         the same thing.
         '''
