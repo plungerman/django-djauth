@@ -166,7 +166,9 @@ class LDAPManager(object):
         cn              [username]
         '''
 
-        dn = 'cn={},{}'.format(person['cn'],self.base)
+        dn = 'cn={},{}'.format(person['cn'][0],self.base)
+        print dn
+
         try:
             self.l.delete_s(dn)
         except ldap.LDAPError, e:
