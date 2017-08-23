@@ -5,8 +5,7 @@ from djtools.fields import NOW
 
 import ldap
 import ldap.modlist as modlist
-import logging
-logger = logging.getLogger(__name__)
+
 
 class LDAPManager(object):
 
@@ -22,7 +21,7 @@ class LDAPManager(object):
             self.l.protocol_version = ldap.VERSION3
             # not certain if this is necessary but passwd_s is killing me
             #self.l.set_option(ldap.OPT_PROTOCOL_VERSION,ldap.VERSION3)
-            # logging
+            #
             #ldap.set_option(ldap.OPT_DEBUG_LEVEL,255)
             self.l.simple_bind_s(user,password)
             self.base = base
@@ -194,17 +193,19 @@ class LDAPManager(object):
         mail                    [email]
         '''
 
-        valid = ['cn',settings.LDAP_ID_ATTR,'mail']
+        valid = ['cn',settings.LDAP_ID_ATTR,'mail','carthageDob']
         if field not in valid:
             return None
         philter = '(&(objectclass={}) ({}={}))'.format(
             settings.LDAP_OBJECT_CLASS,field,val
         )
         result_id = self.l.search(
-            self.base,ldap.SCOPE_SUBTREE,str(philter),[x.encode('utf-8') for x in ret]
+            self.base,ldap.SCOPE_SUBTREE,str(philter),
+            [x.encode('utf-8') for x in ret]
         )
         result_type, result_data = self.l.result(result_id, 0)
-        # If the user does not exist in LDAP, Fail.
+
+        # If no results then fail
         if (len(result_data) != 1):
             return None
         else:
