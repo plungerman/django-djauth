@@ -32,7 +32,7 @@ Accepts as input:
     attribute name
 
 Valid attributes:
-    ["cn","carthageNameID","mail"]
+    ["cn","carthageNameID","mail","carthageDob"]
 """
 
 parser = OptionParser(description=desc)
@@ -89,7 +89,7 @@ if __name__ == "__main__":
     password = options.password
     create = options.create
 
-    valid = ["cn","carthageNameID","mail"]
+    valid = ["cn","carthageNameID","mail","carthageDob"]
     if not field and not value:
         print "You must provide an attribute name and its value.\n"
         parser.print_help()
