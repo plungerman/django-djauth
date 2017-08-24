@@ -196,17 +196,18 @@ class LDAPManager(object):
         valid = ['cn',settings.LDAP_ID_ATTR,'mail','carthageDob']
         if field not in valid:
             return None
+
         philter = '(&(objectclass={}) ({}={}))'.format(
             settings.LDAP_OBJECT_CLASS,field,val
         )
+
         result_id = self.l.search(
             self.base,ldap.SCOPE_SUBTREE,str(philter),
             [x.encode('utf-8') for x in ret]
         )
-        result_type, result_data = self.l.result(result_id, 0)
 
-        # If no results then fail
-        if (len(result_data) != 1):
-            return None
-        else:
-            return result_data
+        # we don't really need the result type code but we might take
+        # advantage of that value in the future
+        result_type, result_data = self.l.result(result_id)
+
+        return result_data

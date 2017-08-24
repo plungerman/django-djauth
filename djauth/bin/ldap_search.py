@@ -67,7 +67,13 @@ def main():
     )
     """
     result = l.search(value,field=field)
-    print result
+
+    if field == 'carthageDob':
+        for r in result:
+            p = "{cn[0]}|{carthageNameID[0]}|{sn[0]}|{givenName[0]}|{mail[0]}"
+            print p.format(**r[1])
+    else:
+        print result
 
     # authenticate
     if password:
