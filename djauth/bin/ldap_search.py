@@ -33,6 +33,16 @@ Accepts as input:
 
 Valid attributes:
     ["cn","carthageNameID","mail","carthageDob"]
+
+returns one tuple or a list of tuples in the following format:
+
+(
+    'cn=av,ou=users,o=carthage', {
+        'cn': ['av'], 'carthageNameID': ['999998'], 'sn': ['V'],
+        'mail': ['av@carthage.edu'], 'givenName': ['Audio'],
+        'carthageDob': ['1999-09-09']
+    }
+)
 """
 
 parser = OptionParser(description=desc)
