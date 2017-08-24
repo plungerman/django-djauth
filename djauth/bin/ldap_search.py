@@ -10,11 +10,9 @@ sys.path.append('/usr/local/lib/python2.7/dist-packages/')
 sys.path.append('/usr/local/lib/python2.7/')
 sys.path.append('/usr/lib/python2.7/dist-packages/')
 sys.path.append('/usr/lib/python2.7/')
-sys.path.append('/data2/django_trunk/')
+sys.path.append('/data2/django_1.11/')
 sys.path.append('/data2/django_projects/')
 sys.path.append('/data2/django_third/')
-
-#os.environ.setdefault("DJANGO_SETTINGS_MODULE", "djaludir.settings")
 
 django.setup()
 
@@ -23,11 +21,11 @@ from django.conf import settings
 
 from djauth.LDAPManager import LDAPManager
 
-from optparse import OptionParser
+import argparse
 
 # set up command-line options
 desc = """
-Accepts as input:
+Accepts as input:\n\r
     attribute value
     attribute name
 
@@ -45,19 +43,33 @@ returns one tuple or a list of tuples in the following format:
 )
 """
 
-parser = OptionParser(description=desc)
-parser.add_option(
-    "-f", "--att_name", help="Schema attribute field name.", dest="field"
+parser = argparse.ArgumentParser(
+    description=desc, formatter_class=argparse.RawTextHelpFormatter
 )
-parser.add_option(
-    "-v", "--att_val", help="Schema attribute value.", dest="value"
+
+parser.add_argument(
+    "-f", "--att_name",
+    dest='field',
+    required=True,
+    help="Schema attribute field name."
 )
-parser.add_option(
-    "-p", "--password", help="Person's password.", dest="password"
+parser.add_argument(
+    "-v", "--att_val",
+    dest='value',
+    required=True,
+    help="Schema attribute value."
 )
-parser.add_option(
-    "-c", "--create", help="Create a Django account.", dest="create"
+parser.add_argument(
+    "-p", "--password",
+    dest='password',
+    help="Person's password."
 )
+parser.add_argument(
+    "-c", "--create",
+    dest='create',
+    help="Create a Django account."
+)
+
 
 def main():
     """
@@ -91,29 +103,25 @@ def main():
         print auth
         # create a django user
         if create:
-            user = l.dj_create(result[0][1]["cn"][0],result)
+            user = l.dj_create(result[0][1]['cn'][0],result)
             print user
 
 ######################
 # shell command line
 ######################
 
-if __name__ == "__main__":
-    (options, args) = parser.parse_args()
-    field = options.field
-    value = options.value
-    password = options.password
-    create = options.create
+if __name__ == '__main__':
 
-    valid = ["cn","carthageNameID","mail","carthageDob"]
-    if not field and not value:
-        print "You must provide an attribute name and its value.\n"
-        parser.print_help()
-        exit(-1)
-    elif field not in valid:
+    args = parser.parse_args()
+    field = args.field
+    value = args.value
+    password = args.password
+    create = args.create
+
+    valid = ['cn','carthageNameID','mail','carthageDob']
+
+    if field not in valid:
         print "Your attribute is not valid.\n"
-        parser.print_help()
         exit(-1)
     else:
         sys.exit(main())
-
