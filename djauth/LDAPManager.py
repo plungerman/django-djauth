@@ -25,7 +25,7 @@ class LDAPManager(object):
             #ldap.set_option(ldap.OPT_DEBUG_LEVEL,255)
             self.l.simple_bind_s(user,password)
             self.base = base
-        except ldap.LDAPError, e:
+        except ldap.LDAPError as e:
             raise Exception(e)
 
     def unbind(self):
@@ -128,9 +128,9 @@ class LDAPManager(object):
         the same thing.
         '''
 
-        #print "protocol version = %s" % self.l.protocol_version
-        #print ldap.TLS_AVAIL
-        #print "require cert = {}".format(ldap.OPT_X_TLS_REQUIRE_CERT)
+        #print("protocol version = %s" % self.l.protocol_version)
+        #print(ldap.TLS_AVAIL)
+        #print("require cert = {}".format(ldap.OPT_X_TLS_REQUIRE_CERT))
         status = self.l.passwd_s( dn, None, password )
 
         return status
@@ -140,10 +140,10 @@ class LDAPManager(object):
         Modifies an LDAP user's attribute.
         '''
 
-        #print "old = {}".format(old)
-        #print "new = {}".format(new)
+        #print("old = {}".format(old))
+        #print("new = {}".format(new))
         ldif = modlist.modifyModlist(old, new)
-        #print "modlist = {}".format(ldif)
+        #print("modlist = {}".format(ldif))
         # Do the actual modification
         return self.l.modify_s(dn, ldif)
 
@@ -166,11 +166,11 @@ class LDAPManager(object):
         '''
 
         dn = 'cn={},{}'.format(person['cn'][0],self.base)
-        print dn
+        #print(dn)
 
         try:
             self.l.delete_s(dn)
-        except ldap.LDAPError, e:
+        except ldap.LDAPError as e:
             raise Exception(e)
 
     def search(self, val, field=settings.LDAP_ID_ATTR, ret=settings.LDAP_RETURN):

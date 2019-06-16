@@ -66,7 +66,7 @@ class LDAPBackend(object):
             # Success.
             return user
 
-        except Exception, e:
+        except Exception as e:
             # Name or password were bad. Fail permanently.
             return None
 
