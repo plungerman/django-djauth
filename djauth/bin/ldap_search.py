@@ -93,18 +93,19 @@ def main():
     if field == 'carthageDob':
         for r in result:
             p = "{cn[0]}|{carthageNameID[0]}|{sn[0]}|{givenName[0]}|{mail[0]}"
-            print p.format(**r[1])
+            print(p.format(**r[1]))
     else:
-        print result
+        print(result)
 
     # authenticate
     if password:
         auth = l.bind(result[0][0],password)
-        print auth
+        print(auth)
         # create a django user
         if create:
             user = l.dj_create(result[0][1]['cn'][0],result)
-            print user
+            print(user)
+
 
 ######################
 # shell command line
@@ -121,7 +122,7 @@ if __name__ == '__main__':
     valid = ['cn','carthageNameID','mail','carthageDob']
 
     if field not in valid:
-        print "Your attribute is not valid.\n"
+        print("Your attribute is not valid.\n")
         exit(-1)
     else:
         sys.exit(main())
