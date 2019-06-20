@@ -3,6 +3,7 @@ from django.conf import settings
 from django.contrib.auth.models import User, Group
 from djtools.fields import NOW
 
+import sys
 import ldap
 import ldap.modlist as modlist
 
@@ -16,7 +17,7 @@ class LDAPManager(object):
         # Authenticate the base user so we can search
         try:
             self.l = ldap.initialize(
-                '{}://{}:{}'.format(protocol,server,port)
+                '{}://{}:{}'.format(protocol,server,port),
             )
             self.l.protocol_version = ldap.VERSION3
             # not certain if this is necessary but passwd_s is killing me
@@ -201,13 +202,12 @@ class LDAPManager(object):
             settings.LDAP_OBJECT_CLASS,field,val
         )
 
-        result_id = self.l.search(
+        result = self.l.search_s(
             self.base,ldap.SCOPE_SUBTREE,str(philter),
-            [x.encode('utf-8') for x in ret]
+            [x for x in ret]
         )
-
-        # we don't really need the result type code but we might take
-        # advantage of that value in the future
-        result_type, result_data = self.l.result(result_id)
-
-        return result_data
+        # decode byte (e.g. b'larry') to utf-8
+        if sys.version_info.major > 2:
+            for n,v in result[0][1].items():
+                result[0][1][n][0] = v[0].decode(encoding='utf-8')
+        return result
