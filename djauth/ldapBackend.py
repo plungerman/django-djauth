@@ -58,7 +58,7 @@ class LDAPBackend(object):
                         g.user_set.add(user)
                 except:
                     return user
-            except:
+            except User.DoesNotExist:
                 # Create a User object.
                 user = l.dj_create(
                     result_data, auth_user_pk=settings.LDAP_AUTH_USER_PK
