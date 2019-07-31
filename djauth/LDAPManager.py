@@ -207,7 +207,7 @@ class LDAPManager(object):
             [x for x in ret]
         )
         # decode byte (e.g. b'larry') to utf-8
-        if sys.version_info.major > 2:
+        if result and sys.version_info.major > 2:
             for n,v in result[0][1].items():
                 result[0][1][n][0] = v[0].decode(encoding='utf-8')
         return result
