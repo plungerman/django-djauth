@@ -1,4 +1,3 @@
-from django.template import RequestContext
 from django.contrib.auth import SESSION_KEY, BACKEND_SESSION_KEY
 
 import django
