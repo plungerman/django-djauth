@@ -88,7 +88,7 @@ class LDAPManager(object):
             # this will barf 500 if we don't have an ID
             uid = data[settings.LDAP_ID_ATTR][0]
         cn = data['cn'][0]
-        password = User.objects.make_random_password(length=24)
+        password = User.objects.make_random_password(length=32)
         user = User.objects.create(
             pk=uid,username=cn,email=email,last_login=NOW
         )
