@@ -68,7 +68,7 @@ class LDAPBackend(object):
             return user
 
         except Exception as e:
-            # Name or password were bad. Fail permanently.
+            # userame or password were bad. fail permanently.
             return None
 
     def get_user(self, user_id):
