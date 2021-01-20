@@ -15,23 +15,30 @@ class LDAPManager(object):
 
     def __init__(
         self,
-        port=settings.LDAP_PORT,
+        protocol=settings.LDAP_PROTOCOL,
         server=settings.LDAP_SERVER,
+        port=settings.LDAP_PORT,
         user=settings.LDAP_USER,
         password=settings.LDAP_PASS,
+        base=settings.LDAP_BASE,
     ):
         """Initialise our class with the LDAP parameters for connection."""
+        self.base = base
         try:
             self.eldap = ldap.initialize(
-                '{0}://{1}:{2}'.format(settings.LDAP_PROTOCOL, server, port),
+                '{0}://{1}:{2}'.format(protocol, server, port),
             )
-            self.eldap.protocol_version = ldap.VERSION3
-            # not certain if this is necessary but passwd_s is killing me
-            # self.eldap.set_option(ldap.OPT_PROTOCOL_VERSION,ldap.VERSION3)
-            #
-            # ldap.set_option(ldap.OPT_DEBUG_LEVEL, 255)
+        except ldap.LDAPError as error:
+            raise Exception(error)
+        # set LDAPv3 option
+        self.eldap.set_option(ldap.OPT_PROTOCOL_VERSION, ldap.VERSION3)
+        # set debug level
+        self.eldap.set_option(ldap.OPT_DEBUG_LEVEL, 255)
+        # require server certificate but ignore it's validity.
+        ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
+        try:
+            # bind the admin user
             self.eldap.simple_bind_s(user, password)
-            self.base = settings.LDAP_BASE
         except ldap.LDAPError as error:
             raise Exception(error)
 
@@ -69,7 +76,7 @@ class LDAPManager(object):
         self.eldap.add_s(dn, user)
         return self.search(person[settings.LDAP_ID_ATTR])
 
-    def dj_create(self, ldap_results, auth_user_pk=False):
+    def dj_create(self, ldap_results, auth_user_pk=False, groups=None):
         """
         Create a Django User object for LDAP users.
 
@@ -97,15 +104,19 @@ class LDAPManager(object):
             pk=uid, username=cn, email=email, last_login=now,
         )
         user.set_password(password)
-        user.first_name = data['givenName'][0]
-        user.last_name = data['sn'][0]
+        user.first_name = ldap_data['givenName'][0]
+        user.last_name = ldap_data['sn'][0]
         user.save()
         # add to groups
-        for key, _ in settings.LDAP_GROUPS.items():
-            group = data.get(key)
-            if group and group[0] == 'A':
-                grup = Group.objects.get(name__iexact=key)
-                grup.user_set.add(user)
+        if groups:
+            # onelogin
+        else:
+            # novell
+            for key, _ in settings.LDAP_GROUPS.items():
+                group = ldap_data.get(key)
+                if group and group[0] == 'A':
+                    grup = Group.objects.get(name__iexact=key)
+                    grup.user_set.add(user)
         return user
 
     def update_password(self, dn, password):
@@ -172,38 +183,32 @@ class LDAPManager(object):
         except ldap.LDAPError as error:
             raise Exception(error)
 
-    def search(self, find, field=settings.LDAP_ID_ATTR, ret=settings.LDAP_RETURN):
+    def search(
+            self,
+            find,
+            field=settings.LDAP_ID_ATTR,
+            philter=None,
+            ret=settings.LDAP_RETURN,
+        ):
         """
         Search for an LDAP user.
 
         Takes as argument a value and a valid unique field from
         the schema (i.e. LDAP_ID_ATTR, cn, mail).
-        Returns None or a list with dn tuple and a dictionary with the
-        following key/value pairs:
-
-        givenName               [first name]
-        sn                      [last name]
-        cn                      [username]
-        carthageDob             [date of birth]
-        settings.LDAP_ID_ATTR   [college ID]
-        carthageStaffStatus     [staff?]
-        carthageOtherStatus     [alumni?]
-        carthageFacultyStatus   [faculty?]
-        carthageStudentStatus   [student?]
-        mail                    [email]
+        Returns None or a list with a tuple containing a dictionary.
         """
-        valid = ['cn', settings.LDAP_ID_ATTR, 'mail', 'carthageDob']
+        valid = ['cn', settings.LDAP_ID_ATTR, 'mail']
         if field not in valid:
             return None
-
-        philter = '(&(objectclass={0}) ({1}={2}))'.format(
-            settings.LDAP_OBJECT_CLASS, field, find,
-        )
+        if not philter:
+            philter = '(&(objectclass={0}) ({1}={2}))'.format(
+                settings.LDAP_OBJECT_CLASS, field, find,
+            )
 
         search_result = self.eldap.search_s(
             self.base,
             ldap.SCOPE_SUBTREE,
-            str(philter),
+            philter,
             [x for x in ret],
         )
         # decode byte (e.g. b'larry') to utf-8
