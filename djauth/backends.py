@@ -3,7 +3,7 @@
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import User
-from djauth.LDAPManager import LDAPManager
+from djauth.ldap_manager import LDAPManager
 
 
 class LDAPBackend(object):
