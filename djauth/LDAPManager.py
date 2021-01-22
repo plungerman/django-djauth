@@ -7,7 +7,6 @@ import ldap
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import User
-from ldap import modlist
 
 
 class LDAPManager(object):
@@ -24,12 +23,15 @@ class LDAPManager(object):
     ):
         """Initialise our class with the LDAP parameters for connection."""
         self.base = base
+        self.lid_attr = settings.LDAP_ID_ATTR
+        self.ret = settings.LDAP_RETURN
+        self.valid_attributes = settings.LDAP_VALID_ATTR
         try:
             self.eldap = ldap.initialize(
                 '{0}://{1}:{2}'.format(protocol, server, port),
             )
-        except ldap.LDAPError as error:
-            raise Exception(error)
+        except ldap.LDAPError as init_error:
+            raise Exception(init_error)
         # set LDAPv3 option
         self.eldap.set_option(ldap.OPT_PROTOCOL_VERSION, ldap.VERSION3)
         # set debug level
@@ -39,8 +41,8 @@ class LDAPManager(object):
         try:
             # bind the admin user
             self.eldap.simple_bind_s(user, password)
-        except ldap.LDAPError as error:
-            raise Exception(error)
+        except ldap.LDAPError as bind_error:
+            raise Exception(bind_error)
 
     def unbind(self):
         """Disconnect and free resources when done."""
@@ -49,32 +51,6 @@ class LDAPManager(object):
     def bind(self, dn, password):
         """Attempt to bind to the LDAP server with user's DN and password."""
         return self.eldap.simple_bind_s(dn, password)
-
-    def create(self, person):
-        """
-        Creates a new LDAP user.
-
-        Takes as argument a dictionary with the following key/value pairs:
-
-        objectclass                 ['User','etc']
-        givenName                   [first name]
-        sn                          [last name]
-        carthageDob                 [date of birth]
-        settings.LDAP_ID_ATTR       [college ID]
-        cn                          [we use email for username]
-        mail                        [email]
-        userPassword                [password]
-        carthageFacultyStatus       [faculty]
-        carthageStaffStatus         [staff]
-        carthageStudentStatus       [student]
-        carthageFormerStudentStatus [alumni]
-        carthageOtherStatus         [trustees etc]
-        """
-        user = modlist.addModlist(person)
-
-        dn = 'cn={0},{1}'.format(person['cn'], self.base)
-        self.eldap.add_s(dn, user)
-        return self.search(person[settings.LDAP_ID_ATTR])
 
     def dj_create(self, ldap_results, auth_user_pk=False, groups=None):
         """
@@ -97,7 +73,7 @@ class LDAPManager(object):
             uid = None
         else:
             # this will barf 500 if we don't have an ID
-            uid = ldap_data[settings.LDAP_ID_ATTR][0]
+            uid = ldap_data[self.lid_attr][0]
         cn = ldap_data['cn'][0]
         password = User.objects.make_random_password(length=32)
         user = User.objects.create(
@@ -109,110 +85,34 @@ class LDAPManager(object):
         user.save()
         # add to groups
         if groups:
-            # onelogin
-        else:
-            # novell
-            for key, _ in settings.LDAP_GROUPS.items():
-                group = ldap_data.get(key)
-                if group and group[0] == 'A':
-                    grup = Group.objects.get(name__iexact=key)
-                    grup.user_set.add(user)
+            for group in groups:
+                grup = Group.objects.get(name__iexact=group)
+                grup.user_set.add(user)
         return user
 
-    def update_password(self, dn, password):
-        """
-        Change an LDAP user's password.
-
-        Takes a dn and a password.
-
-        The passwd_s() method and its asynchronous counterpart, passwd()
-        take three arguments:
-
-        The DN of the record to change.
-        The old password (or None if an admin user makes the change)
-        The new password
-
-        If the passwd_s change is successful, it returns a tuple with the
-        status code (ldap.RES_EXTENDED, which is the integer 120), and an
-        empty list:
-
-        (120, [])
-
-        passwd returns a result ID code.
-
-        Novell do not seem to support 3062 so passwd & passwd_s fail
-        with a PROTOCOL_ERROR. Returns 2 if using passwd, which means
-        the same thing.
-        """
-        # print("protocol version = %s" % self.eldap.protocol_version)
-        # print(ldap.TLS_AVAIL)
-        # print("require cert = {}".format(ldap.OPT_X_TLS_REQUIRE_CERT))
-        status = self.eldap.passwd_s(dn, None, password)
-
-        return status
-
-    def modify_list(self, dn, old, new):
-        """Modifie an LDAP user's attribute."""
-        # print("old = {}".format(old))
-        # print("new = {}".format(new))
-        ldif = modlist.modifyModlist(old, new)
-        # print("modlist = {}".format(ldif))
-        # Do the actual modification
-        return self.eldap.modify_s(dn, ldif)
-
-    def modify(self, dn, name, attr_val):
-        """Modifie an LDAP user's attribute."""
-        # ldif = modlist.modifyModlist(old,new)
-        # Do the actual modification
-        # self.eldap.modify_s(dn,ldif)
-        return self.eldap.modify_s(dn, [(ldap.MOD_REPLACE, name, str(att_val))])
-
-    def delete(self, person):
-        """
-        Delete an LDAP user.
-
-        Takes as argument a dictionary with the following key/value pairs:
-
-        cn              [username]
-        """
-        dn = 'cn={0},{1}'.format(person['cn'][0], self.base)
-        # print(dn)
-
-        try:
-            self.eldap.delete_s(dn)
-        except ldap.LDAPError as error:
-            raise Exception(error)
-
-    def search(
-            self,
-            find,
-            field=settings.LDAP_ID_ATTR,
-            philter=None,
-            ret=settings.LDAP_RETURN,
-        ):
+    def search(self, find, field=None, ret=None):
         """
         Search for an LDAP user.
 
         Takes as argument a value and a valid unique field from
-        the schema (i.e. LDAP_ID_ATTR, cn, mail).
+        the schema (e.g. cn, mail).
         Returns None or a list with a tuple containing a dictionary.
         """
-        valid = ['cn', settings.LDAP_ID_ATTR, 'mail']
-        if field not in valid:
+        if not field:
+            field = self.lid_attr
+        elif field not in self.valid_attributes:
             return None
-        if not philter:
-            philter = '(&(objectclass={0}) ({1}={2}))'.format(
-                settings.LDAP_OBJECT_CLASS, field, find,
-            )
-
+        philter = '({0}={1})'.format(field, find)
+        if not ret:
+            ret = self.ret
         search_result = self.eldap.search_s(
             self.base,
             ldap.SCOPE_SUBTREE,
             philter,
-            [x for x in ret],
+            list(ret),
         )
         # decode byte (e.g. b'larry') to utf-8
         if search_result and sys.version_info.major > 2:
-            for n, v in search_result[0][1].items():
-                search_result[0][1][n][0] = v[0].decode(encoding='utf-8')
+            for key, instance in search_result[0][1].items():
+                search_result[0][1][key][0] = instance[0].decode(encoding='utf-8')
         return search_result

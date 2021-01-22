@@ -1,2 +1,2 @@
 django==2.2.17
-python-ldap==3.1.0
+python-ldap==3.1.1
