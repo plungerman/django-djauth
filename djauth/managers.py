@@ -87,7 +87,9 @@ class LDAPManager(object):
         if groups:
             for group in groups:
                 grup = Group.objects.get(name__iexact=group)
-                grup.user_set.add(user)
+                if not user.groups.filter(name=grup).exists():
+                    grup.user_set.add(user)
+
         return user
 
     def search(self, find, field=None, ret=None):

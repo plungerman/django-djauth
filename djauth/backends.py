@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from django.conf import settings
-from django.contrib.auth.models import Group
 from django.contrib.auth.models import User
-from djauth.ldap_manager import LDAPManager
+from djauth.managers import LDAPManager
 
 
 class LDAPBackend(object):
@@ -18,24 +17,15 @@ class LDAPBackend(object):
         if not password:
             return None
 
-        username = username.lower()
-        # works for username and username@domain.com
-        username = username.lower().split('@')[0]
-
         # initialise the LDAP manager
         eldap = LDAPManager()
+        # works for username and username@domain.com
+        username = username.lower()
+        username = username.lower().split('@')[0]
         # search for a valid user
         result_data = eldap.search(username, field='cn')
         # If the user does not exist in LDAP, Fail.
         if not result_data:
-            return None
-        try:
-            # Attempt to bind to the user's DN.
-            # Success: The user existed and authenticated.
-            # Fail: throw an exception.
-            l.bind(result_data[0][0], password)
-        except Exception:
-            # userame or password were bad. fail permanently.
             return None
 
         # deal with groups
@@ -47,6 +37,14 @@ class LDAPBackend(object):
             roll = ldap_groups.get(role.split(',')[0].split(' ')[0][3:])
             if roll and roll not in roles:
                 roles.append(roll)
+
+        # Attempt to bind to the user's DN.
+        try:
+            # Success: The user existed and authenticated.
+            l.bind(result_data[0][0], password)
+        except Exception:
+            # Fail: userame and/or password were invalid
+            return None
 
         # Get the user record or create one with no privileges.
         try:
@@ -62,11 +60,7 @@ class LDAPBackend(object):
                 user.last_name = result_data[0][1]['sn'][0]
                 user.first_name = result_data[0][1]['givenName'][0]
                 user.save()
-            if roles:
-                for group in roles:
-                    grup = Group.objects.get(name__iexact=group)
-                    if not user.groups.filter(name=grup).exists():
-                        grup.user_set.add(user)
+
         # Success.
         return user
 
