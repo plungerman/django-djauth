@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
+
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.db.models import Q
 from djauth.managers import LDAPManager
 
 
@@ -28,6 +30,14 @@ class LDAPBackend(object):
         if not result_data:
             return None
 
+        # Attempt to bind to the user's DN.
+        try:
+            # Success: The user existed and authenticated.
+            eldap.bind(result_data[0][0], password)
+        except Exception:
+            # Fail: userame and/or password were invalid
+            return None
+
         # deal with groups
         roles = []
         ldap_groups = settings.LDAP_GROUPS
@@ -38,20 +48,13 @@ class LDAPBackend(object):
             if roll and roll not in roles:
                 roles.append(roll)
 
-        # Attempt to bind to the user's DN.
-        try:
-            # Success: The user existed and authenticated.
-            l.bind(result_data[0][0], password)
-        except Exception:
-            # Fail: userame and/or password were invalid
-            return None
-
         # Get the user record or create one with no privileges.
+        cid = result_data[0][1][settings.LDAP_ID_ATTR][0]
         try:
-            user = User.objects.get(username__exact=username)
+            user = User.objects.filter(Q(username__exact=username) | Q(pk=cid)).first()
         except User.DoesNotExist:
             # Create a User object.
-            user = l.dj_create(
+            user = eldap.dj_create(
                 result_data,
                 auth_user_pk=settings.LDAP_AUTH_USER_PK,
                 groups=roles,
@@ -60,6 +63,10 @@ class LDAPBackend(object):
                 user.last_name = result_data[0][1]['sn'][0]
                 user.first_name = result_data[0][1]['givenName'][0]
                 user.save()
+        # check for username change:
+        if user.username != username:
+            user.username = username
+            user.save()
 
         # Success.
         return user
