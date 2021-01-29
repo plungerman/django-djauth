@@ -50,19 +50,14 @@ class LDAPBackend(object):
 
         # Get the user record or create one with no privileges.
         cid = result_data[0][1][settings.LDAP_ID_ATTR][0]
-        try:
-            user = User.objects.filter(Q(username__exact=username) | Q(pk=cid)).first()
-        except User.DoesNotExist:
+        user = User.objects.filter(Q(username__exact=username) | Q(pk=cid)).first()
+        if not user:
             # Create a User object.
             user = eldap.dj_create(
                 result_data,
                 auth_user_pk=settings.LDAP_AUTH_USER_PK,
                 groups=roles,
             )
-            if not user.last_name:
-                user.last_name = result_data[0][1]['sn'][0]
-                user.first_name = result_data[0][1]['givenName'][0]
-                user.save()
         # check for username change:
         if user.username != username:
             user.username = username
