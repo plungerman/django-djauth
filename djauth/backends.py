@@ -39,14 +39,7 @@ class LDAPBackend(object):
             return None
 
         # deal with groups
-        roles = []
-        ldap_groups = settings.LDAP_GROUPS
-        for role in result_data[0][1][settings.LDAP_GROUP_ATTR]:
-            if isinstance(role, bytes):
-                role = role.decode(encoding='utf-8')
-            roll = ldap_groups.get(role.split(',')[0].split(' ')[0][3:])
-            if roll and roll not in roles:
-                roles.append(roll)
+        roles = eldap.get_groups(result_data)
 
         # Get the user record or create one with no privileges.
         cid = result_data[0][1][settings.LDAP_ID_ATTR][0]

@@ -52,6 +52,18 @@ class LDAPManager(object):
         """Attempt to bind to the LDAP server with user's DN and password."""
         return self.eldap.simple_bind_s(dn, password)
 
+    def get_groups(self, result_data):
+        """Return all of the groups with which a user is associated."""
+        groups = []
+        ldap_groups = settings.LDAP_GROUPS
+        for group in result_data[0][1][settings.LDAP_GROUP_ATTR]:
+            if isinstance(group, bytes):
+                group = group.decode(encoding='utf-8')
+            grup = ldap_groups.get(group.split(',')[0].split(' ')[0][3:])
+            if grup and grup not in groups:
+                groups.append(grup)
+        return groups
+
     def dj_create(self, ldap_results, auth_user_pk=False, groups=None):
         """
         Create a Django User object for LDAP users.
