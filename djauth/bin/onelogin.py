@@ -68,13 +68,7 @@ def main():
                     bind = auth_fail
                 print(bind)
             print('groups:\n\n')
-            groups = []
-            for role in result_data[0][1][ldap_group_attr]:
-                if isinstance(role, bytes):
-                    role = role.decode(encoding='utf-8')
-                group = ldap_groups.get(role.split(',')[0].split(' ')[0][3:])
-                if group and group not in groups:
-                    groups.append(group)
+            groups = eldap.get_groups(result_data)
             print(groups)
             # testing for djbeca
             luser = result_data[0][1]
