@@ -94,14 +94,13 @@ class LDAPManager(object):
         user.set_password(password)
         user.first_name = ldap_data['givenName'][0]
         user.last_name = ldap_data['sn'][0]
-        user.save()
         # add to groups
         if groups:
             for group in groups:
                 grup = Group.objects.get(name__iexact=group)
                 if not user.groups.filter(name=grup).exists():
                     grup.user_set.add(user)
-
+        user.save()
         return user
 
     def search(self, find, field=None, ret=None):
