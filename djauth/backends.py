@@ -39,8 +39,7 @@ class LDAPBackend(object):
             return None
 
         # deal with groups
-        roles = eldap.get_groups(result_data)
-
+        groups = eldap.get_groups(result_data)
         # Get the user record or create one with no privileges.
         cid = result_data[0][1][settings.LDAP_ID_ATTR][0]
         user = User.objects.filter(Q(username__exact=username) | Q(pk=cid)).first()
@@ -49,7 +48,7 @@ class LDAPBackend(object):
             user = eldap.dj_create(
                 result_data,
                 auth_user_pk=settings.LDAP_AUTH_USER_PK,
-                groups=roles,
+                groups=groups,
             )
         # check for username change:
         if user.username != username:
