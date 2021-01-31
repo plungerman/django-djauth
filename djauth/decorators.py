@@ -53,18 +53,19 @@ def portal_auth_required(session_var, group=None, redirect_url=None, encryption=
                         #logger.debug(guid)
                         if encryption:
                             guid = decrypt(guid)
-                        uid = get_userid(guid)
-                        if uid:
-                            #logger.debug(uid)
-                            uid = int(uid)
+                        portal_user = get_userid(guid, username=True)
+                        if portal_user:
+                            uid = int(portal_user[5])
+                            # obtain username from email
+                            username = portal_user[4].split('@')[0]
                             try:
                                 user = User.objects.get(pk=uid)
                             except User.DoesNotExist:
                                 user = None
                             if not user:
                                 # search for user in LDAP store
-                                ldapman = LDAPManager()
-                                result_data = ldapman.search(uid)
+                                eldap = LDAPManager()
+                                result_data = eldap.search(username, field='cn')
                                 groups = eldap.get_groups(result_data)
                                 # create a new django user
                                 user = eldap.dj_create(
