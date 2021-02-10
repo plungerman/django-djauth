@@ -84,23 +84,33 @@ class LDAPManager(object):
         if auth_user_pk:
             uid = None
         else:
-            # this will barf 500 if we don't have an ID
-            uid = ldap_data[self.lid_attr][0]
-        cn = ldap_data['cn'][0]
-        password = User.objects.make_random_password(length=32)
-        user = User.objects.create(
-            pk=uid, username=cn, email=email, last_login=now,
-        )
-        user.set_password(password)
-        user.first_name = ldap_data['givenName'][0]
-        user.last_name = ldap_data['sn'][0]
-        # add to groups
-        if groups:
-            for group in groups:
-                grup = Group.objects.get(name__iexact=group)
-                if not user.groups.filter(name=grup).exists():
-                    grup.user_set.add(user)
-        user.save()
+            try:
+                uid = ldap_data[self.lid_attr][0]
+            except Exception:
+                uid = None
+        if uid:
+            cn = ldap_data['cn'][0]
+            # check for an exisiting user
+            user = User.objects.filter(pk=uid).first()
+            if user:
+                user.username = cn
+            else:
+                password = User.objects.make_random_password(length=32)
+                user = User.objects.create(
+                    pk=uid, username=cn, email=email, last_login=now,
+                )
+                user.set_password(password)
+                # add to groups
+                if groups:
+                    for group in groups:
+                        grup = Group.objects.get(name__iexact=group)
+                        if not user.groups.filter(name=grup).exists():
+                            grup.user_set.add(user)
+            user.first_name = ldap_data['givenName'][0]
+            user.last_name = ldap_data['sn'][0]
+            user.save()
+        else:
+            user = None
         return user
 
     def search(self, find, field=None, ret=None):
