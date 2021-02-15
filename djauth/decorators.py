@@ -11,7 +11,6 @@ from djauth.managers import LDAPManager
 from djimix.core.encryption import decrypt
 from djimix.core.utils import get_userid
 from djtools.utils.users import in_group
-from djtools.fields import NOW
 
 from functools import wraps
 
@@ -54,7 +53,9 @@ def portal_auth_required(session_var, group=None, redirect_url=None, encryption=
                         if encryption:
                             guid = decrypt(guid)
                         portal_user = get_userid(guid, username=True)
-                        if portal_user:
+                        # for some reason, email is missing for some users.
+                        # ID might be missing for administrative users
+                        if portal_user and portal_user[4] and portal_user[5]:
                             uid = int(portal_user[5])
                             # obtain username from email
                             username = portal_user[4].split('@')[0]
