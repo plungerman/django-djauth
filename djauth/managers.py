@@ -38,6 +38,9 @@ class LDAPManager(object):
         self.eldap.set_option(ldap.OPT_DEBUG_LEVEL, 255)
         # require server certificate but ignore it's validity.
         ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
+        # timeouts. default of 30 was not enough
+        ldap.set_option(ldap.OPT_NETWORK_TIMEOUT, 60)
+        ldap.set_option(ldap.OPT_TIMEOUT, 60)
         try:
             # bind the admin user
             self.eldap.simple_bind_s(user, password)
