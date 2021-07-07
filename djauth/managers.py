@@ -140,5 +140,7 @@ class LDAPManager(object):
         # decode byte (e.g. b'larry') to utf-8
         if search_result and sys.version_info.major > 2:
             for key, instance in search_result[0][1].items():
-                search_result[0][1][key][0] = instance[0].decode(encoding='utf-8')
+                # if they are not fully provisioned then 'memberOf' will be empty
+                if instance:
+                    search_result[0][1][key][0] = instance[0].decode(encoding='utf-8')
         return search_result
