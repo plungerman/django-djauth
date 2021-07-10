@@ -85,10 +85,14 @@ def portal_auth_required(session_var, group=None, redirect_url=None, encryption=
                 if group:
                     if not in_group(user, group) and not user.is_superuser:
                         return HttpResponseRedirect(resolved_redirect_url)
-                # sign in the user manually
-                user.backend = 'django.contrib.auth.backends.ModelBackend'
-                login(request, user)
-                request.session[session_var] = True
+                if user:
+                    # sign in the user manually
+                    user.backend = 'django.contrib.auth.backends.ModelBackend'
+                    login(request, user)
+                    request.session[session_var] = True
+                else:
+                    # no user
+                    return HttpResponseRedirect(redirect)
 
             return view_func(request, *args, **kwargs)
         return wrapper
