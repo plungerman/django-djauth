@@ -59,12 +59,13 @@ class LDAPManager(object):
         """Return all of the groups with which a user is associated."""
         groups = []
         ldap_groups = settings.LDAP_GROUPS
-        for group in result_data[0][1][settings.LDAP_GROUP_ATTR]:
-            if isinstance(group, bytes):
-                group = group.decode(encoding='utf-8')
-            grup = ldap_groups.get(group.split(',')[0].split(' ')[0][3:])
-            if grup and grup not in groups:
-                groups.append(grup)
+        if result_data:
+            for group in result_data[0][1][settings.LDAP_GROUP_ATTR]:
+                if isinstance(group, bytes):
+                    group = group.decode(encoding='utf-8')
+                grup = ldap_groups.get(group.split(',')[0].split(' ')[0][3:])
+                if grup and grup not in groups:
+                    groups.append(grup)
         return groups
 
     def dj_create(self, ldap_results, auth_user_pk=False, groups=None):
@@ -79,41 +80,41 @@ class LDAPManager(object):
         ldap can still login properly, and LDAP users still
         have a User object.
         """
-        now = datetime.datetime.now()
-        ldap_data = ldap_results[0][1]
-        email = ldap_data['mail'][0]
-        # if auth_user_pk is True, then we use the primary key from
-        # the database rather than the LDAP user ID
-        if auth_user_pk:
-            uid = None
-        else:
-            try:
-                uid = ldap_data[self.lid_attr][0]
-            except Exception:
+        user = None
+        if ldap_results:
+            now = datetime.datetime.now()
+            ldap_data = ldap_results[0][1]
+            email = ldap_data['mail'][0]
+            # if auth_user_pk is True, then we use the primary key from
+            # the database rather than the LDAP user ID
+            if auth_user_pk:
                 uid = None
-        if uid:
-            cn = ldap_data['cn'][0]
-            # check for an exisiting user
-            user = User.objects.filter(pk=uid).first()
-            if user:
-                user.username = cn
             else:
-                password = User.objects.make_random_password(length=32)
-                user = User.objects.create(
-                    pk=uid, username=cn, email=email, last_login=now,
-                )
-                user.set_password(password)
-                # add to groups
-                if groups:
-                    for group in groups:
-                        grup = Group.objects.get(name__iexact=group)
-                        if not user.groups.filter(name=grup).exists():
-                            grup.user_set.add(user)
-            user.first_name = ldap_data['givenName'][0]
-            user.last_name = ldap_data['sn'][0]
-            user.save()
-        else:
-            user = None
+                try:
+                    uid = ldap_data[self.lid_attr][0]
+                except Exception:
+                    uid = None
+            if uid:
+                cn = ldap_data['cn'][0]
+                # check for an exisiting user
+                user = User.objects.filter(pk=uid).first()
+                if user:
+                    user.username = cn
+                else:
+                    password = User.objects.make_random_password(length=32)
+                    user = User.objects.create(
+                        pk=uid, username=cn, email=email, last_login=now,
+                    )
+                    user.set_password(password)
+                    # add to groups
+                    if groups:
+                        for group in groups:
+                            grup = Group.objects.get(name__iexact=group)
+                            if not user.groups.filter(name=grup).exists():
+                                grup.user_set.add(user)
+                user.first_name = ldap_data['givenName'][0]
+                user.last_name = ldap_data['sn'][0]
+                user.save()
         return user
 
     def search(self, find, field=None, ret=None):
