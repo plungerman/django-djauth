@@ -2,7 +2,6 @@ from django.conf import settings
 from django.urls import reverse_lazy
 from django.contrib.auth.models import Group, User
 from django.http import HttpResponseRedirect
-from django.utils.decorators import available_attrs
 from django.utils.encoding import force_str
 from django.shortcuts import resolve_url
 from django.contrib.auth import login
@@ -28,7 +27,7 @@ def portal_auth_required(session_var, group=None, redirect_url=None, encryption=
     """
 
     def _portal_auth_required(view_func):
-        @wraps(view_func, assigned=available_attrs(view_func))
+        @wraps(view_func)
         def wrapper(request, *args, **kwargs):
             #logger.debug('here in the rappa')
             resolved_redirect_url = force_str(
