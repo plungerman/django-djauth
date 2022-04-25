@@ -132,12 +132,15 @@ class LDAPManager(object):
         philter = '({0}={1})'.format(field, find)
         if not ret:
             ret = self.ret
-        search_result = self.eldap.search_s(
-            self.base,
-            ldap.SCOPE_SUBTREE,
-            philter,
-            list(ret),
-        )
+        try:
+            search_result = self.eldap.search_s(
+                self.base,
+                ldap.SCOPE_SUBTREE,
+                philter,
+                list(ret),
+            )
+        except Exception:
+            search_result = None
         # decode byte (e.g. b'larry') to utf-8
         if search_result and sys.version_info.major > 2:
             for key, instance in search_result[0][1].items():
