@@ -1,2 +1,1 @@
-django==2.2.26
 python-ldap==3.4.0
