@@ -1,0 +1,2 @@
+user = eldap.search(2159059, 'Carthage\x20ID\x20Numer')
+user = eldap.search(1217657, 'Carthage\xA0ID\xA0Numer')

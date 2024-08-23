@@ -1,2 +1,3 @@
 django
 python-ldap
+python3-saml-django
