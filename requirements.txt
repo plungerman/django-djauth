@@ -1,2 +1,2 @@
-django==4.2.14
+django
 python-ldap
