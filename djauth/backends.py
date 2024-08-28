@@ -57,8 +57,10 @@ class LDAPBackend(object):
         # check for username change:
         if user.username != username:
             user.username = username
+            user.first_name = result_data[0][1]['givenName'][0]
+            user.last_name = result_data[0][1]['sn'][0]
+            user.email = result_data[0][1]['mail'][0]
             user.save()
-
         # Success.
         return user
 
