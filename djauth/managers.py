@@ -107,7 +107,7 @@ class LDAPManager(object):
                 if user:
                     user.username = cn
                 else:
-                    password = "".join(secrets.choice(allowed_chars) for i in range(length))
+                    password = "".join(secrets.choice(ALLOWED_CHARS) for i in range(LENGTH))
                     user = User.objects.create(
                         pk=uid, username=cn, email=email, last_login=now,
                     )
