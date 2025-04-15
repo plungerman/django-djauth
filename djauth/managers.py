@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import secrets
+
 import datetime
 import sys
 
@@ -7,6 +9,10 @@ import ldap
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.auth.models import User
+
+
+ALLOWED_CHARS = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+LENGTH = 32
 
 
 class LDAPManager(object):
@@ -101,7 +107,7 @@ class LDAPManager(object):
                 if user:
                     user.username = cn
                 else:
-                    password = User.objects.make_random_password(length=32)
+                    password = "".join(secrets.choice(allowed_chars) for i in range(length))
                     user = User.objects.create(
                         pk=uid, username=cn, email=email, last_login=now,
                     )

@@ -55,7 +55,7 @@ def main():
         eldap = LDAPManager()
     except Exception as error:
         raise Exception(error)
-
+    cid = None
     if eldap:
         print("El Dap init")
         result_data = eldap.search(find=username, field='cn')
@@ -80,13 +80,15 @@ def main():
             print('first_name={0}'.format(luser['givenName'][0]))
             print('last_name={0}'.format(luser['sn'][0]))
             print('vitals:\n\n')
-            phile = os.path.join('/d2/python_venv/3.6/djimix/djimix/sql/vitals.sql')
-            with open(phile) as incantation:
-                sql = incantation.read()
-                sql = sql.replace('{CID}', str(cid))
-            with get_connection() as connection:
-                vitals = xsql(sql, connection).fetchone()
-            print(vitals)
+        phile = os.path.join('/d2/python_venv/3.6/djimix/djimix/sql/vitals.sql')
+        if not cid:
+            cid = username
+        with open(phile) as incantation:
+            sql = incantation.read()
+            sql = sql.replace('{CID}', str(cid))
+        with get_connection() as connection:
+            vitals = xsql(sql, connection).fetchone()
+        print(vitals)
     else:
         print("El Dap fail")
 
